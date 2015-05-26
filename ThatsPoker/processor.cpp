@@ -5,6 +5,10 @@
 #include <displaycardsetsstrategy.h>
 #include <flopboardbrowser.h>
 #include <computehandprobastep1.h>
+#include <computeflophandprobastrategy.h>
+#include <handcategorizerstrategy.h>
+#include <handcategory.h>
+#include <evaluator.h>
 
 Processor::Processor()
 {
@@ -18,6 +22,36 @@ Processor::~Processor()
 
 void Processor::process()
 {
+    /*
+    Evaluator <7> evaluator;
+    unsigned int cards [7] = {10, 21, 25, 0, 7, 47, 50};
+    evaluator.evaluate(cards);
+*/
+
+    HandCategorizerStrategy * handCategorizerStrategy = new HandCategorizerStrategy();
+    HandBrowser handBrowser(handCategorizerStrategy);
+    handBrowser.browse();
+
+    const HandCategorizerStrategy::HandCategories & handCategories = handCategorizerStrategy->getCategories();
+
+    for(const auto & categoryEntry : handCategories)
+    {
+        for(const auto & hand : categoryEntry)
+        {
+            ComputeFlopHandProbaStrategy * computeFlopHandProbaStrategy = new ComputeFlopHandProbaStrategy(hand.first, hand.second);
+            FlopBoardBrowser flopBoardBrowser(computeFlopHandProbaStrategy);
+            flopBoardBrowser.addForbiddenCard(hand.first);
+            flopBoardBrowser.addForbiddenCard(hand.second);
+            flopBoardBrowser.browse();
+
+            //std::cout << "Brelan proba : " << computeFlopHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::DOUBLE_PAIR) << " %" << std::endl;
+
+            delete computeFlopHandProbaStrategy;
+        }
+    }
+
+    delete handCategorizerStrategy;
+
     /*DisplayCardSetsStrategy <2> * displayCardSetsStrategy = new DisplayCardSetsStrategy <2> ();
     HandBrowser handBrowser(displayCardSetsStrategy);
     handBrowser.browse();
@@ -32,10 +66,10 @@ void Processor::process()
     delete displayCardSetsStrategy;
     */
 
-    ComputeHandProbaStep1 * computeHandProbaStep1 = new ComputeHandProbaStep1();
+    /*ComputeHandProbaStep1 * computeHandProbaStep1 = new ComputeHandProbaStep1();
     HandBrowser handBrowser(computeHandProbaStep1);
     handBrowser.browse();
-    delete computeHandProbaStep1;
+    delete computeHandProbaStep1;*/
 }
 
 

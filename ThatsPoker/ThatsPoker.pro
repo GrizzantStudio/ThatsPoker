@@ -20,8 +20,11 @@ SOURCES += main.cpp\
     handbrowser.cpp \
     flopboardbrowser.cpp \
     computehandprobastep1.cpp \
-    computehandprobastep2.cpp \
-    handcategorizerstrategy.cpp
+    handcategorizerstrategy.cpp \
+    computeflophandprobastrategy.cpp \
+    handcategory.cpp \
+    combinaisontype.cpp \
+    combinaison.cpp
 
 HEADERS  += mainwindow.h \
     types.h \
@@ -34,7 +37,13 @@ HEADERS  += mainwindow.h \
     flopboardbrowser.h \
     displaycardsetsstrategy.h \
     computehandprobastep1.h \
-    computehandprobastep2.h \
-    handcategorizerstrategy.h
+    handcategorizerstrategy.h \
+    computeflophandprobastrategy.h \
+    handcategory.h \
+    evaluator.h \
+    combinaisontype.h \
+    combinaison.h
 
 FORMS    += mainwindow.ui
+
+INCLUDEPATH += .

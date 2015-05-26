@@ -1,7 +1,6 @@
 #ifndef MATHS_H
 #define MATHS_H
 
-
 class Maths
 {
 public:

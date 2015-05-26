@@ -1,12 +1,11 @@
 #include "computehandprobastep1.h"
 
-#include <computehandprobastep2.h>
+#include <computeflophandprobastrategy.h>
 #include <flopboardbrowser.h>
 #include <handcategorizerstrategy.h>
 
 ComputeHandProbaStep1::ComputeHandProbaStep1()
 {
-
 }
 
 ComputeHandProbaStep1::~ComputeHandProbaStep1()

@@ -1,20 +1,9 @@
 #include "handcategorizerstrategy.h"
-
-const unsigned int HandCategorizerStrategy::PAIR = 0;
-const unsigned int HandCategorizerStrategy::SORTED_CONNECTORS = 1;
-const unsigned int HandCategorizerStrategy::SORTED_1_GAPPERS = 2;
-const unsigned int HandCategorizerStrategy::SORTED_2_GAPPERS = 3;
-const unsigned int HandCategorizerStrategy::SORTED_3_GAPPERS = 4;
-const unsigned int HandCategorizerStrategy::SORTED_MISC = 5;
-const unsigned int HandCategorizerStrategy::UNSORTED_CONNECTORS = 6;
-const unsigned int HandCategorizerStrategy::UNSORTED_1_GAPPERS = 7;
-const unsigned int HandCategorizerStrategy::UNSORTED_2_GAPPERS = 8;
-const unsigned int HandCategorizerStrategy::UNSORTED_3_GAPPERS = 9;
-const unsigned int HandCategorizerStrategy::UNSORTED_MISC = 10;
+#include <handcategory.h>
 
 HandCategorizerStrategy::HandCategorizerStrategy()
 {
-
+    m_handCategories = HandCategories(11, HandList());
 }
 
 HandCategorizerStrategy::~HandCategorizerStrategy()
@@ -35,13 +24,25 @@ void HandCategorizerStrategy::processCardSet(unsigned int a_cardSet [2])
     int value2 = a_cardSet[1] % 13;
     int color2 = a_cardSet[1] / 13;
 
+    if(value1 > value2)
+    {
+        int valueTmp = value1;
+        int colorTmp = color1;
+
+        value1 = value2;
+        color1 = color2;
+
+        value2 = valueTmp;
+        color2 = colorTmp;
+    }
+
     bool pair = value1 == value2;
 
     QPair <unsigned int, unsigned int> hand(a_cardSet[0], a_cardSet[1]);
 
     if(pair)
     {
-        m_handCategories[PAIR].push_back(hand);
+        m_handCategories[HandCategory::PAIR].push_back(hand);
     }
     else
     {
@@ -52,9 +53,9 @@ void HandCategorizerStrategy::processCardSet(unsigned int a_cardSet [2])
         if(connectors)
         {
             if(sorted)
-                m_handCategories[SORTED_CONNECTORS].push_back(hand);
+                m_handCategories[HandCategory::SORTED_CONNECTORS].push_back(hand);
             else
-                m_handCategories[UNSORTED_CONNECTORS].push_back(hand);
+                m_handCategories[HandCategory::UNSORTED_CONNECTORS].push_back(hand);
         }
         else
         {
@@ -63,9 +64,9 @@ void HandCategorizerStrategy::processCardSet(unsigned int a_cardSet [2])
             if(gappers1)
             {
                 if(sorted)
-                    m_handCategories[SORTED_1_GAPPERS].push_back(hand);
+                    m_handCategories[HandCategory::SORTED_1_GAPPERS].push_back(hand);
                 else
-                    m_handCategories[UNSORTED_1_GAPPERS].push_back(hand);
+                    m_handCategories[HandCategory::UNSORTED_1_GAPPERS].push_back(hand);
             }
             else
             {
@@ -74,9 +75,9 @@ void HandCategorizerStrategy::processCardSet(unsigned int a_cardSet [2])
                 if(gappers2)
                 {
                     if(sorted)
-                        m_handCategories[SORTED_2_GAPPERS].push_back(hand);
+                        m_handCategories[HandCategory::SORTED_2_GAPPERS].push_back(hand);
                     else
-                        m_handCategories[UNSORTED_2_GAPPERS].push_back(hand);
+                        m_handCategories[HandCategory::UNSORTED_2_GAPPERS].push_back(hand);
                 }
                 else
                 {
@@ -85,16 +86,16 @@ void HandCategorizerStrategy::processCardSet(unsigned int a_cardSet [2])
                     if(gappers3)
                     {
                         if(sorted)
-                            m_handCategories[SORTED_3_GAPPERS].push_back(hand);
+                            m_handCategories[HandCategory::SORTED_3_GAPPERS].push_back(hand);
                         else
-                            m_handCategories[UNSORTED_3_GAPPERS].push_back(hand);
+                            m_handCategories[HandCategory::UNSORTED_3_GAPPERS].push_back(hand);
                     }
                     else
                     {
                         if(sorted)
-                            m_handCategories[SORTED_MISC].push_back(hand);
+                            m_handCategories[HandCategory::SORTED_MISC].push_back(hand);
                         else
-                            m_handCategories[UNSORTED_MISC].push_back(hand);
+                            m_handCategories[HandCategory::UNSORTED_MISC].push_back(hand);
                     }
                 }
             }
