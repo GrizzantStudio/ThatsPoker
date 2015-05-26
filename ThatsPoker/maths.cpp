@@ -9,7 +9,7 @@ float Maths::roundf(float x)
 
 float Maths::roundProba(float a_proba)
 {
-    return roundf(a_proba * 10.f) / 10.f;
+    return roundf(a_proba * 1000.f) / 1000.f;
 }
 
 double factorial(double nValue)

@@ -24,7 +24,9 @@ SOURCES += main.cpp\
     computeflophandprobastrategy.cpp \
     handcategory.cpp \
     combinaisontype.cpp \
-    combinaison.cpp
+    combinaison.cpp \
+    computeflopturnriverhandprobastrategy.cpp \
+    flopturnriverboardbrowser.cpp
 
 HEADERS  += mainwindow.h \
     types.h \
@@ -42,7 +44,9 @@ HEADERS  += mainwindow.h \
     handcategory.h \
     evaluator.h \
     combinaisontype.h \
-    combinaison.h
+    combinaison.h \
+    computeflopturnriverhandprobastrategy.h \
+    flopturnriverboardbrowser.h
 
 FORMS    += mainwindow.ui
 
