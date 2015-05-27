@@ -1,18 +1,18 @@
 #include "processor.h"
 #include "maths.h"
 #include <iostream>
-#include <handbrowser.h>
 #include <displaycardsetsstrategy.h>
-#include <flopboardbrowser.h>
-#include <computehandprobastep1.h>
-#include <computeflophandprobastrategy.h>
 #include <handcategorizerstrategy.h>
 #include <handcategory.h>
 #include <evaluator.h>
-#include <computeflopturnriverhandprobastrategy.h>
-#include <flopturnriverboardbrowser.h>
+#include <evaluatecardsetwithhandstrategy.h>
+#include <QXmlStreamWriter>
+#include <cardsetbrowser.h>
+#include <QFile>
 
-Processor::Processor()
+Processor::Processor(QString a_filepath)
+    : m_isProcessing(false)
+    , m_filepath(a_filepath)
 {
 
 }
@@ -22,69 +22,119 @@ Processor::~Processor()
 
 }
 
-void Processor::process()
+bool Processor::isProcessing()
 {
-    /*
-    Evaluator <7> evaluator;
-    unsigned int cards [7] = {10, 21, 25, 0, 7, 47, 50};
-    evaluator.evaluate(cards);
-*/
+    return m_isProcessing;
+}
+
+void Processor::run ()
+{
+    m_isProcessing = true;
+    emit onProcessStart();
+
+    QFile file(m_filepath);
+    file.open(QIODevice::WriteOnly);
+
+    QXmlStreamWriter writer(& file);
+    writer.setAutoFormatting(true);
+    writer.writeStartDocument();
 
     HandCategorizerStrategy * handCategorizerStrategy = new HandCategorizerStrategy();
-    HandBrowser handBrowser(handCategorizerStrategy);
+    CardSetBrowser <2> handBrowser(handCategorizerStrategy);
     handBrowser.browse();
+    double browsedHandCount = handBrowser.getBrowsedHandCount();
 
     const HandCategorizerStrategy::HandCategories & handCategories = handCategorizerStrategy->getCategories();
 
+    double processedHandCount = 0.;
     int categoryIndex = 0;
     for(const auto & categoryEntry : handCategories)
     {
+        emit onCategoryStart(categoryIndex);
 
-        unsigned int hand1 = categoryEntry[0].first;
-        unsigned int hand2 = categoryEntry[0].second;
+        writer.writeStartElement("Category");
+        writer.writeAttribute("id", QString("%1").arg(categoryIndex));
 
-
-        ComputeFlopHandProbaStrategy * computeFlopHandProbaStrategy = new ComputeFlopHandProbaStrategy(hand1, hand2);
-        FlopBoardBrowser flopBoardBrowser(computeFlopHandProbaStrategy);
-        flopBoardBrowser.addForbiddenCard(hand1);
-        flopBoardBrowser.addForbiddenCard(hand2);
-        flopBoardBrowser.browse();
-
-        ComputeFlopTurnRiverHandProbaStrategy * computeFlopTurnRiverHandProbaStrategy = new ComputeFlopTurnRiverHandProbaStrategy(hand1, hand2);
-        FlopTurnRiverBoardBrowser flopTurnRiverBoardBrowser(computeFlopTurnRiverHandProbaStrategy);
-        flopTurnRiverBoardBrowser.addForbiddenCard(hand1);
-        flopTurnRiverBoardBrowser.addForbiddenCard(hand2);
-        flopTurnRiverBoardBrowser.browse();
-
-        std::cout << "===================" << std::endl;
-        std::cout << "Category : " << categoryIndex << std::endl;
-        std::cout << "High card proba : [FLOP " << computeFlopHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::HIGH_CARD) << " %] [FLOP+TURN+RIVER " << computeFlopTurnRiverHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::HIGH_CARD) << " %]" << std::endl;
-        std::cout << "Pair proba : [FLOP " << computeFlopHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::PAIR) << " %] [FLOP+TURN+RIVER " << computeFlopTurnRiverHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::PAIR) << " %]" << std::endl;
-        std::cout << "Double pair proba : [FLOP " << computeFlopHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::DOUBLE_PAIR) << " %] [FLOP+TURN+RIVER " << computeFlopTurnRiverHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::DOUBLE_PAIR) << " %]" << std::endl;
-        std::cout << "Three of a kind proba : [FLOP " << computeFlopHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::THREE_OF_A_KIND) << " %] [FLOP+TURN+RIVER " << computeFlopTurnRiverHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::THREE_OF_A_KIND) << " %]" << std::endl;
-        std::cout << "Straight proba : [FLOP " << computeFlopHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::STRAIGHT) << " %] [FLOP+TURN+RIVER " << computeFlopTurnRiverHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::STRAIGHT) << " %]" << std::endl;
-        std::cout << "Flush proba : [FLOP " << computeFlopHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::FLUSH) << " %] [FLOP+TURN+RIVER " << computeFlopTurnRiverHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::FLUSH) << " %]" << std::endl;
-        std::cout << "Full house proba : [FLOP " << computeFlopHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::FULL_HOUSE) << " %] [FLOP+TURN+RIVER " << computeFlopTurnRiverHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::FULL_HOUSE) << " %]" << std::endl;
-        std::cout << "Four of a kind proba : [FLOP " << computeFlopHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::FOUR_OF_A_KIND) << " %] [FLOP+TURN+RIVER " << computeFlopTurnRiverHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::FOUR_OF_A_KIND) << " %]" << std::endl;
-        std::cout << "Straight flush proba : [FLOP " << computeFlopHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::STRAIGHT_FLUSH) << " %] [FLOP+TURN+RIVER " << computeFlopTurnRiverHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::STRAIGHT_FLUSH) << " %]" << std::endl;
-
-        delete computeFlopHandProbaStrategy;
-        delete computeFlopTurnRiverHandProbaStrategy;
-
-        /*for(const auto & hand : categoryEntry)
+        for(const auto & hand : categoryEntry)
         {
-            ComputeFlopHandProbaStrategy * computeFlopHandProbaStrategy = new ComputeFlopHandProbaStrategy(hand.first, hand.second);
-            FlopBoardBrowser flopBoardBrowser(computeFlopHandProbaStrategy);
+            emit onHandStart(hand.first, hand.second);
+            writer.writeStartElement("Hand");
+            writer.writeAttribute("card1", QString("%1").arg(hand.first));
+            writer.writeAttribute("card2", QString("%1").arg(hand.second));
+
+            EvaluateCardSetWithHandStrategy <3> * evaluateFlopWithHandStrategy = new EvaluateCardSetWithHandStrategy <3> (hand.first, hand.second);
+            CardSetBrowser <3> flopBoardBrowser(evaluateFlopWithHandStrategy);
             flopBoardBrowser.addForbiddenCard(hand.first);
             flopBoardBrowser.addForbiddenCard(hand.second);
             flopBoardBrowser.browse();
 
-            //std::cout << "Brelan proba : " << computeFlopHandProbaStrategy->getCombinaisonProbaInPercent(CombinaisonType::DOUBLE_PAIR) << " %" << std::endl;
+            writer.writeStartElement("Flop");
+            writer.writeTextElement("HighCard", QString("%1").arg(evaluateFlopWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::HIGH_CARD)));
+            writer.writeTextElement("Pair", QString("%1").arg(evaluateFlopWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::PAIR)));
+            writer.writeTextElement("DoublePair", QString("%1").arg(evaluateFlopWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::DOUBLE_PAIR)));
+            writer.writeTextElement("ThreeOfAKind", QString("%1").arg(evaluateFlopWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::THREE_OF_A_KIND)));
+            writer.writeTextElement("Straight", QString("%1").arg(evaluateFlopWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::STRAIGHT)));
+            writer.writeTextElement("Flush", QString("%1").arg(evaluateFlopWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::FLUSH)));
+            writer.writeTextElement("FullHouse", QString("%1").arg(evaluateFlopWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::FULL_HOUSE)));
+            writer.writeTextElement("FourOfAKind", QString("%1").arg(evaluateFlopWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::FOUR_OF_A_KIND)));
+            writer.writeTextElement("StraightFlush", QString("%1").arg(evaluateFlopWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::STRAIGHT_FLUSH)));
+            writer.writeEndElement();
 
-            delete computeFlopHandProbaStrategy;
-        }*/
+            delete evaluateFlopWithHandStrategy;
+
+            EvaluateCardSetWithHandStrategy <4> * evaluateFlopTurnWithHandStrategy = new EvaluateCardSetWithHandStrategy <4> (hand.first, hand.second);
+            CardSetBrowser <4> flopTurnBoardBrowser(evaluateFlopTurnWithHandStrategy);
+            flopTurnBoardBrowser.addForbiddenCard(hand.first);
+            flopTurnBoardBrowser.addForbiddenCard(hand.second);
+            flopTurnBoardBrowser.browse();
+
+            writer.writeStartElement("FlopTurn");
+            writer.writeTextElement("HighCard", QString("%1").arg(evaluateFlopTurnWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::HIGH_CARD)));
+            writer.writeTextElement("Pair", QString("%1").arg(evaluateFlopTurnWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::PAIR)));
+            writer.writeTextElement("DoublePair", QString("%1").arg(evaluateFlopTurnWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::DOUBLE_PAIR)));
+            writer.writeTextElement("ThreeOfAKind", QString("%1").arg(evaluateFlopTurnWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::THREE_OF_A_KIND)));
+            writer.writeTextElement("Straight", QString("%1").arg(evaluateFlopTurnWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::STRAIGHT)));
+            writer.writeTextElement("Flush", QString("%1").arg(evaluateFlopTurnWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::FLUSH)));
+            writer.writeTextElement("FullHouse", QString("%1").arg(evaluateFlopTurnWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::FULL_HOUSE)));
+            writer.writeTextElement("FourOfAKind", QString("%1").arg(evaluateFlopTurnWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::FOUR_OF_A_KIND)));
+            writer.writeTextElement("StraightFlush", QString("%1").arg(evaluateFlopTurnWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::STRAIGHT_FLUSH)));
+            writer.writeEndElement();
+
+            delete evaluateFlopTurnWithHandStrategy;
+
+            EvaluateCardSetWithHandStrategy <5> * evaluateFlopTurnRiverWithHandStrategy = new EvaluateCardSetWithHandStrategy <5> (hand.first, hand.second);
+            CardSetBrowser <5> flopTurnRiverBoardBrowser(evaluateFlopTurnRiverWithHandStrategy);
+            flopTurnRiverBoardBrowser.addForbiddenCard(hand.first);
+            flopTurnRiverBoardBrowser.addForbiddenCard(hand.second);
+            flopTurnRiverBoardBrowser.browse();
+
+            writer.writeStartElement("FlopTurnRiver");
+            writer.writeTextElement("HighCard", QString("%1").arg(evaluateFlopTurnRiverWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::HIGH_CARD)));
+            writer.writeTextElement("Pair", QString("%1").arg(evaluateFlopTurnRiverWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::PAIR)));
+            writer.writeTextElement("DoublePair", QString("%1").arg(evaluateFlopTurnRiverWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::DOUBLE_PAIR)));
+            writer.writeTextElement("ThreeOfAKind", QString("%1").arg(evaluateFlopTurnRiverWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::THREE_OF_A_KIND)));
+            writer.writeTextElement("Straight", QString("%1").arg(evaluateFlopTurnRiverWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::STRAIGHT)));
+            writer.writeTextElement("Flush", QString("%1").arg(evaluateFlopTurnRiverWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::FLUSH)));
+            writer.writeTextElement("FullHouse", QString("%1").arg(evaluateFlopTurnRiverWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::FULL_HOUSE)));
+            writer.writeTextElement("FourOfAKind", QString("%1").arg(evaluateFlopTurnRiverWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::FOUR_OF_A_KIND)));
+            writer.writeTextElement("StraightFlush", QString("%1").arg(evaluateFlopTurnRiverWithHandStrategy->getCombinaisonProbaInPercent(CombinaisonType::STRAIGHT_FLUSH)));
+            writer.writeEndElement();
+
+            delete evaluateFlopTurnRiverWithHandStrategy;
+
+            processedHandCount += 1.;
+
+            writer.writeEndElement();
+            emit onHandEnd();
+
+            double percentDone = Maths::roundf(processedHandCount / browsedHandCount * 100. * 10.) / 10.;
+            emit onPercentageChange(percentDone);
+        }
 
         ++ categoryIndex;
+
+        writer.writeEndElement();
+        emit onCategoryEnd();
     }
 
     delete handCategorizerStrategy;
@@ -107,6 +157,10 @@ void Processor::process()
     HandBrowser handBrowser(computeHandProbaStep1);
     handBrowser.browse();
     delete computeHandProbaStep1;*/
+
+    writer.writeEndDocument();
+    m_isProcessing = false;
+    emit onProcessDone();
 }
 
 

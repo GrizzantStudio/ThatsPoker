@@ -12,11 +12,13 @@ private :
 
     CardSetBrowserStrategy <CARD_COUNT> * m_strategy;
     std::set <unsigned int> m_forbiddenCards;
+    double m_browsedHandCount;
 
-protected:
+public :
 
     CardSetBrowser(CardSetBrowserStrategy <CARD_COUNT> * a_strategy)
         : m_strategy(a_strategy)
+        , m_browsedHandCount(0.)
     {
     }
 
@@ -29,6 +31,11 @@ protected:
     void addForbiddenCard(unsigned int a_cardId)
     {
         m_forbiddenCards.insert(a_cardId);
+    }
+
+    double getBrowsedHandCount()
+    {
+        return m_browsedHandCount;
     }
 
     void browse()
@@ -57,6 +64,8 @@ protected:
 
         while(setIndex < setCount - 0.5)
         {
+            m_browsedHandCount += 1.;
+
             if(m_strategy != nullptr)
             {
                 for(int i = 0; i < CARD_COUNT; ++ i)

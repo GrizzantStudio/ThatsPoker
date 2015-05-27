@@ -17,16 +17,10 @@ SOURCES += main.cpp\
     cardmapper.cpp \
     maths.cpp \
     processor.cpp \
-    handbrowser.cpp \
-    flopboardbrowser.cpp \
-    computehandprobastep1.cpp \
     handcategorizerstrategy.cpp \
-    computeflophandprobastrategy.cpp \
     handcategory.cpp \
     combinaisontype.cpp \
-    combinaison.cpp \
-    computeflopturnriverhandprobastrategy.cpp \
-    flopturnriverboardbrowser.cpp
+    combinaison.cpp
 
 HEADERS  += mainwindow.h \
     types.h \
@@ -34,19 +28,14 @@ HEADERS  += mainwindow.h \
     maths.h \
     processor.h \
     cardsetbrowser.h \
-    handbrowser.h \
     cardsetbrowserstrategy.h \
-    flopboardbrowser.h \
     displaycardsetsstrategy.h \
-    computehandprobastep1.h \
     handcategorizerstrategy.h \
-    computeflophandprobastrategy.h \
     handcategory.h \
     evaluator.h \
     combinaisontype.h \
     combinaison.h \
-    computeflopturnriverhandprobastrategy.h \
-    flopturnriverboardbrowser.h
+    evaluatecardsetwithhandstrategy.h
 
 FORMS    += mainwindow.ui
 
