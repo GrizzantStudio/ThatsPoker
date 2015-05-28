@@ -9,6 +9,23 @@
 template <unsigned int CARD_COUNT>
 class Evaluator
 {
+public :
+
+    class EvaluatorResult
+    {
+    public :
+        EvaluatorResult()
+            : combinaison(nullptr)
+        {
+            for(int i = 0; i < CARD_COUNT; ++ i)
+                cardUsed[i] = false;
+        }
+
+    public :
+        CombinaisonPtr combinaison;
+        bool cardUsed[CARD_COUNT];
+    };
+
 private :
 
     int m_colors [CARD_COUNT];
@@ -69,8 +86,10 @@ private :
         */
     }
 
-    CombinaisonPtr checkStraightFlush()
+    EvaluatorResult checkStraightFlush()
     {
+        EvaluatorResult result;
+
         bool straightFlush = false;
         int straightFlushColor = -1;
         int straightFlushValue = -1;
@@ -97,6 +116,9 @@ private :
                 bool straight = true;
                 int straightCardCount = 1;
 
+                for(int k = 0; k < CARD_COUNT; ++ k)
+                    result.cardUsed[k] = (k == m_cardIndexPerColor[i][j]);
+
                 for(unsigned int k = j; ! straightFlush && straight && k < m_cardIndexPerColor[i].size(); ++ k)
                 {
                     //std::cout << "=== check index " << k << " (value1 : " << m_values[m_cardIndexPerColor[i][k]] << ", value2 : " << m_values[m_cardIndexPerColor[i][k+1]] << ")" << std::endl;
@@ -108,6 +130,8 @@ private :
                     if(straight)
                     {
                         //std::cout << "=== " << straightCardCount << " straight cards" << std::endl;
+
+                        result.cardUsed[m_cardIndexPerColor[i][(k == m_cardIndexPerColor[i].size() - 1) ? 0 : k + 1]] = true;
 
                         ++ straightCardCount;
                         if(straightCardCount == 5)
@@ -125,11 +149,14 @@ private :
             }
         }
 
-        return straightFlush ? CombinaisonPtr(new StraightFlushCombinaison(straightFlushValue)) : nullptr;
+        result.combinaison = straightFlush ? CombinaisonPtr(new StraightFlushCombinaison(straightFlushValue)) : nullptr;
+        return result;
     }
 
-    CombinaisonPtr checkFourOfAKind()
+    EvaluatorResult checkFourOfAKind()
     {
+        EvaluatorResult result;
+
         bool carre = false;
         int carreValue = -1;
         int kickerValue = -1;
@@ -138,6 +165,9 @@ private :
         {
             if(m_cardIndexPerValue[i].size() == 4)
             {
+                for(int j = 0; j < 4; ++ j)
+                    result.cardUsed[m_cardIndexPerValue[i][j]] = true;
+
                 carreValue = i;
                 carre = true;
             }
@@ -152,11 +182,14 @@ private :
             }
         }
 
-        return carre ? CombinaisonPtr(new FourOfAKindCombinaison(carreValue, kickerValue)) : nullptr;
+        result.combinaison = carre ? CombinaisonPtr(new FourOfAKindCombinaison(carreValue, kickerValue)) : nullptr;
+        return result;
     }
 
-    CombinaisonPtr checkFullHouse()
+    EvaluatorResult checkFullHouse()
     {
+        EvaluatorResult result;
+
         bool full = false;
         int fullMainValue = -1;
         int fullSecondaryValue = -1;
@@ -164,7 +197,12 @@ private :
         for(int i = 12; fullMainValue == -1 && i >= 0; -- i)
         {
             if(m_cardIndexPerValue[i].size() == 3)
+            {
+                for(int j = 0; j < 3; ++ j)
+                    result.cardUsed[m_cardIndexPerValue[i][j]] = true;
+
                 fullMainValue = i;
+            }
         }
 
         if(fullMainValue != -1)
@@ -172,17 +210,25 @@ private :
             for(int i = 12; fullSecondaryValue == -1 && i >= 0; -- i)
             {
                 if(i != fullMainValue && m_cardIndexPerValue[i].size() >= 2)
+                {
+                    for(unsigned int j = 0; j < m_cardIndexPerValue[i].size(); ++ j)
+                        result.cardUsed[m_cardIndexPerValue[i][j]] = true;
+
                     fullSecondaryValue = i;
+                }
             }
         }
 
         full = fullMainValue != -1 && fullSecondaryValue != -1;
 
-        return full ? CombinaisonPtr(new FullHouseCombinaison(fullMainValue, fullSecondaryValue)) : nullptr;
+        result.combinaison = full ? CombinaisonPtr(new FullHouseCombinaison(fullMainValue, fullSecondaryValue)) : nullptr;
+        return result;
     }
 
-    CombinaisonPtr checkFlush()
+    EvaluatorResult checkFlush()
     {
+        EvaluatorResult result;
+
         bool flush = false;
         int flush_values [5] = {-1, -1, -1, -1, -1};
         int flushColor = -1;
@@ -194,17 +240,22 @@ private :
                 flush = true;
 
                 for(int j = 0; j < 5; ++ j)
+                {
                     flush_values[j] = m_values[m_cardIndexPerColor[i][j]];
-
+                    result.cardUsed[m_cardIndexPerColor[i][j]] = true;
+                }
                 flushColor = i;
             }
         }
 
-        return flush ? CombinaisonPtr(new FlushCombinaison(flush_values)) : nullptr;
+        result.combinaison = flush ? CombinaisonPtr(new FlushCombinaison(flush_values)) : nullptr;
+        return result;
     }
 
-    CombinaisonPtr checkStraight()
+    EvaluatorResult checkStraight()
     {
+        EvaluatorResult result;
+
         bool straight = false;
         int straightValue = -1;
 
@@ -228,6 +279,11 @@ private :
             bool continueStraight = true;
             int straightCardCount = 1;
 
+            for(int j = 0; j < CARD_COUNT; ++ j)
+            {
+                result.cardUsed[j] = m_values[j] == i;
+            }
+
             for(int j = i; ! straight && continueStraight && j >= 0; -- j)
             {
                 if(j == 0)
@@ -242,7 +298,13 @@ private :
                 }
 
                 if(continueStraight)
-                {
+                {  
+                    for(int k = 0; k < CARD_COUNT; ++ k)
+                    {
+                        if(m_values[k] == (j == 0) ? 12 : j - 1)
+                            result.cardUsed[k] = true;
+                    }
+
                     ++ straightCardCount;
                     //std::cout << "=== " << straightCardCount << " straight cards" << std::endl;
 
@@ -259,11 +321,14 @@ private :
             }
         }
 
-        return straight ? CombinaisonPtr(new StraightCombinaison(straightValue)) : nullptr;
+        result.combinaison = straight ? CombinaisonPtr(new StraightCombinaison(straightValue)) : nullptr;
+        return result;
     }
 
-    CombinaisonPtr checkThreeOfAKind()
+    EvaluatorResult checkThreeOfAKind()
     {
+        EvaluatorResult result;
+
         bool brelan = false;
         int brelanValue = -1;
         int kickersValue [2] = {-1, -1};
@@ -272,6 +337,9 @@ private :
         {
             if(m_cardIndexPerValue[i].size() == 3)
             {
+                for(int j = 0; j < 3; ++ j)
+                    result.cardUsed[m_cardIndexPerValue[i][j]] = true;
+
                 brelanValue = i;
                 brelan = true;
             }
@@ -291,11 +359,14 @@ private :
             }
         }
 
-        return brelan ? CombinaisonPtr(new ThreeOfAKindCombinaison(brelanValue, kickersValue)) : nullptr;
+        result.combinaison = brelan ? CombinaisonPtr(new ThreeOfAKindCombinaison(brelanValue, kickersValue)) : nullptr;
+        return result;
     }
 
-    CombinaisonPtr checkDoublePair()
+    EvaluatorResult checkDoublePair()
     {
+        EvaluatorResult result;
+
         bool doublePair = false;
         int doublePairValue1 = -1;
         int doublePairValue2 = -1;
@@ -306,9 +377,17 @@ private :
             if(m_cardIndexPerValue[i].size() == 2)
             {
                 if(doublePairValue1 == -1)
+                {
+                    for(int j = 0; j < 2; ++ j)
+                        result.cardUsed[m_cardIndexPerValue[i][j]] = true;
+
                     doublePairValue1 = i;
+                }
                 else if(doublePairValue2 == -1)
                 {
+                    for(int j = 0; j < 2; ++ j)
+                        result.cardUsed[m_cardIndexPerValue[i][j]] = true;
+
                     doublePairValue2 = i;
                     doublePair = true;
                 }
@@ -324,11 +403,14 @@ private :
             }
         }
 
-        return doublePair ? CombinaisonPtr(new DoublePairCombinaison(doublePairValue1, doublePairValue2, kickerValue)) : nullptr;
+        result.combinaison = doublePair ? CombinaisonPtr(new DoublePairCombinaison(doublePairValue1, doublePairValue2, kickerValue)) : nullptr;
+        return result;
     }
 
-    CombinaisonPtr checkPair()
+    EvaluatorResult checkPair()
     {
+        EvaluatorResult result;
+
         bool pair = false;
         int pairValue = -1;
         int kickersValue [3] = {-1, -1, -1};
@@ -337,6 +419,9 @@ private :
         {
             if(m_cardIndexPerValue[i].size() == 2)
             {
+                for(int j = 0; j < 2; ++ j)
+                    result.cardUsed[m_cardIndexPerValue[i][j]] = true;
+
                 pairValue = i;
                 pair = true;
             }
@@ -355,11 +440,14 @@ private :
             }
         }
 
-        return pair ? CombinaisonPtr(new PairCombinaison(pairValue, kickersValue)) : nullptr;
+        result.combinaison = pair ? CombinaisonPtr(new PairCombinaison(pairValue, kickersValue)) : nullptr;
+        return result;
     }
 
-    CombinaisonPtr checkHighCard()
+    EvaluatorResult checkHighCard()
     {
+        EvaluatorResult result;
+
         int highCards [5] = {-1, -1, -1, -1, -1};
 
         int highCardIndex = 0;
@@ -368,49 +456,54 @@ private :
             if(! m_cardIndexPerValue[i].empty())
             {
                 highCards[highCardIndex] = i;
+
+                Q_ASSERT(m_cardIndexPerValue[i].size() == 0);
+                result.cardUsed[m_cardIndexPerValue[i][0]] = true;
+
                 ++ highCardIndex;
             }
         }
 
-        return CombinaisonPtr(new HighCardCombinaison(highCards));
+        result.combinaison = CombinaisonPtr(new HighCardCombinaison(highCards));
+        return result;
     }
 
 public :
 
-    CombinaisonPtr evaluate(unsigned int a_cards[CARD_COUNT])
+    EvaluatorResult evaluate(unsigned int a_cards[CARD_COUNT])
     {
-        CombinaisonPtr combinaison = nullptr;
+        EvaluatorResult result;
 
         initialize(a_cards);
 
-        if(combinaison == nullptr)
-            combinaison = checkStraightFlush();
+        if(result.combinaison == nullptr)
+            result = checkStraightFlush();
 
-        if(combinaison == nullptr)
-            combinaison = checkFourOfAKind();
+        if(result.combinaison == nullptr)
+            result = checkFourOfAKind();
 
-        if(combinaison == nullptr)
-            combinaison = checkFullHouse();
+        if(result.combinaison == nullptr)
+            result = checkFullHouse();
 
-        if(combinaison == nullptr)
-            combinaison = checkFlush();
+        if(result.combinaison == nullptr)
+            result = checkFlush();
 
-        if(combinaison == nullptr)
-            combinaison = checkStraight();
+        if(result.combinaison == nullptr)
+            result = checkStraight();
 
-        if(combinaison == nullptr)
-            combinaison = checkThreeOfAKind();
+        if(result.combinaison == nullptr)
+            result = checkThreeOfAKind();
 
-        if(combinaison == nullptr)
-            combinaison = checkDoublePair();
+        if(result.combinaison == nullptr)
+            result = checkDoublePair();
 
-        if(combinaison == nullptr)
-            combinaison = checkPair();
+        if(result.combinaison == nullptr)
+            result = checkPair();
 
-        if(combinaison == nullptr)
-            combinaison = checkHighCard();
+        if(result.combinaison == nullptr)
+            result = checkHighCard();
 
-        return combinaison;
+        return result;
     }
 
 };
